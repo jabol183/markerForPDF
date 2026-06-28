@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice OCR Extractor</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <span class="header-title">Invoice OCR</span>
+      </div>
+      <button class="icon-btn" id="settingsBtn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Main view -->
+    <div id="mainView">
+      <!-- Server status -->
+      <div class="server-status" id="serverStatus">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Checking server...</span>
+      </div>
+
+      <!-- Upload area -->
+      <div class="upload-area" id="uploadArea">
+        <input type="file" id="fileInput" accept=".pdf" style="display:none" />
+        <div class="upload-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <p class="upload-text">Drop PDF invoice here</p>
+        <p class="upload-subtext">or</p>
+        <button class="btn btn-outline" id="browseBtn">Browse file</button>
+      </div>
+
+      <!-- Tab PDF button -->
+      <button class="btn btn-secondary w-full" id="extractTabBtn" style="margin-top:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Extract from current tab PDF
+      </button>
+
+      <!-- Options row -->
+      <div class="options-row">
+        <label class="toggle-label">
+          <input type="checkbox" id="useLlmToggle" />
+          <span class="toggle-track"></span>
+          <span>Use LLM (Gemini)</span>
+        </label>
+        <label class="toggle-label">
+          <input type="checkbox" id="forceOcrToggle" />
+          <span class="toggle-track"></span>
+          <span>Force OCR</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Loading view -->
+    <div id="loadingView" class="hidden">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Extracting invoice data...</p>
+      <p class="loading-sub" id="loadingStep">Converting PDF with Marker OCR</p>
+    </div>
+
+    <!-- Results view -->
+    <div id="resultsView" class="hidden">
+      <!-- Summary cards -->
+      <div class="summary-cards" id="summaryCards"></div>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab active" data-tab="json">JSON</button>
+        <button class="tab" data-tab="markdown">Markdown</button>
+        <button class="tab" data-tab="raw">Raw OCR</button>
+      </div>
+
+      <!-- Tab content -->
+      <div class="tab-content">
+        <div id="tab-json" class="tab-pane active">
+          <pre class="code-block" id="jsonOutput"></pre>
+        </div>
+        <div id="tab-markdown" class="tab-pane hidden">
+          <pre class="code-block" id="markdownOutput"></pre>
+        </div>
+        <div id="tab-raw" class="tab-pane hidden">
+          <pre class="code-block" id="rawOutput"></pre>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-bar">
+        <button class="btn btn-primary" id="copyJsonBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy JSON
+        </button>
+        <button class="btn btn-secondary" id="copyMdBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy MD
+        </button>
+        <button class="btn btn-accent" id="fillFormBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Fill vdesk form
+        </button>
+        <button class="btn btn-ghost" id="downloadBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:4px">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download
+        </button>
+      </div>
+
+      <button class="btn btn-ghost w-full" id="newExtractionBtn" style="margin-top:6px">
+        Extract another invoice
+      </button>
+    </div>
+
+    <!-- Settings panel -->
+    <div id="settingsView" class="hidden">
+      <h3 class="settings-title">Settings</h3>
+
+      <div class="form-group">
+        <label class="form-label">Server URL</label>
+        <input type="text" id="serverUrlInput" class="form-input" placeholder="http://localhost:8765" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Gemini API Key (optional)</label>
+        <input type="password" id="geminiKeyInput" class="form-input" placeholder="AIza..." />
+        <p class="form-hint">Enable LLM-enhanced extraction for higher accuracy</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">vdesk URL pattern</label>
+        <input type="text" id="vdeskUrlInput" class="form-input" placeholder="https://vdesk.example.com/*" />
+        <p class="form-hint">URL pattern matching your vdesk instance</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Field mapping (JSON)</label>
+        <textarea id="fieldMappingInput" class="form-textarea" rows="8" placeholder='{"invoice_number": "#inv-num", "total": "#total-amount"}'></textarea>
+        <p class="form-hint">Map invoice fields to CSS selectors in vdesk form</p>
+      </div>
+
+      <div class="settings-actions">
+        <button class="btn btn-primary" id="saveSettingsBtn">Save settings</button>
+        <button class="btn btn-ghost" id="cancelSettingsBtn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast hidden" id="toast"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
