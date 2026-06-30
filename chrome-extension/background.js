@@ -4,27 +4,29 @@
 // Handles PDF fetching for tabs that the popup can't reach directly,
 // and manages download cleanup.
 
+// Hardcoded vdesk mapping (https://faktury.unilogo.local)
+// IDs sourced from ksefvdeskpins export. "select2:" prefix = Select2 dropdown.
+const VDESK_FIELD_MAPPING = {
+  "invoice_number": "#fv_edycjadanych2_cc2_a133_idx16",
+  "invoice_date":   "#fv_edycjadanych2_cc2_a133_idx20",
+  "due_date":       "#fv_edycjadanych2_cc2_a133_idx40",
+  "vendor.name":    "#fv_edycjadanych2_cc2_a133_idx3",
+  "vendor.address": "#fv_edycjadanych2_cc2_a133_idx21",
+  "vendor.tax_id":  "#fv_edycjadanych2_cc2_a133_idx29",
+  "subtotal":       "#fv_edycjadanych2_cc2_a133_idx59",
+  "tax":            "#fv_edycjadanych2_cc2_a133_idx63",
+  "total":          "#fv_edycjadanych2_cc2_a133_idx61",
+  "bank_details":   "#fv_edycjadanych2_cc2_a133_idx39",
+  "currency":       "select2:#fv_edycjadanych2_cc2_a133_idx38",
+  "payment_terms":  "select2:#fv_edycjadanych2_cc2_a133_idx36",
+};
+
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(["serverUrl", "fieldMapping"], (data) => {
+  chrome.storage.local.get(["serverUrl", "fieldMapping", "vdeskUrl"], (data) => {
     const defaults = {};
     if (!data.serverUrl) defaults.serverUrl = "http://localhost:8765";
-    if (!data.fieldMapping) {
-      defaults.fieldMapping = JSON.stringify({
-        invoice_number: '[name="invoice_number"], #invoice_number',
-        invoice_date: '[name="invoice_date"], #invoice_date',
-        due_date: '[name="due_date"], #due_date',
-        po_number: '[name="po_number"], #po_number',
-        "vendor.name": '[name="vendor_name"], #vendor_name',
-        "vendor.tax_id": '[name="vendor_tax_id"], #vendor_tax_id',
-        "bill_to.name": '[name="bill_to_name"], #bill_to',
-        subtotal: '[name="subtotal"], #subtotal',
-        tax: '[name="tax"], #tax_amount',
-        total: '[name="total"], #total_amount',
-        balance_due: '[name="balance_due"], #balance_due',
-        payment_terms: '[name="payment_terms"], #payment_terms',
-        notes: '[name="notes"], textarea[name="remarks"]',
-      }, null, 2);
-    }
+    if (!data.vdeskUrl)  defaults.vdeskUrl  = "https://faktury.unilogo.local";
+    if (!data.fieldMapping) defaults.fieldMapping = JSON.stringify(VDESK_FIELD_MAPPING, null, 2);
     if (Object.keys(defaults).length) chrome.storage.local.set(defaults);
   });
 });
