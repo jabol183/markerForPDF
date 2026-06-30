@@ -7,23 +7,24 @@
 let serverUrl = "http://localhost:8765";
 let extractedData = null;
 
+// Hardcoded field mapping for vdesk at https://faktury.unilogo.local
+// Element IDs sourced from ksefvdeskpins export.
+// Fields prefixed with "select2:" are Select2 dropdowns — content.js handles them specially.
 const DEFAULT_FIELD_MAPPING = {
-  invoice_number: '[name="invoice_number"], #invoice_number, [data-field="invoiceNumber"]',
-  invoice_date: '[name="invoice_date"], #invoice_date, [data-field="invoiceDate"]',
-  due_date: '[name="due_date"], #due_date, [data-field="dueDate"]',
-  po_number: '[name="po_number"], #po_number, [data-field="poNumber"]',
-  "vendor.name": '[name="vendor_name"], #vendor_name, [data-field="vendorName"]',
-  "vendor.address": '[name="vendor_address"], #vendor_address',
-  "vendor.tax_id": '[name="vendor_tax_id"], #vendor_tax_id, [data-field="vendorTaxId"]',
-  "bill_to.name": '[name="bill_to_name"], #bill_to, [data-field="billToName"]',
-  "bill_to.address": '[name="bill_to_address"], #bill_to_address',
-  subtotal: '[name="subtotal"], #subtotal',
-  tax: '[name="tax"], #tax_amount, [data-field="taxAmount"]',
-  total: '[name="total"], #total_amount, [data-field="totalAmount"]',
-  balance_due: '[name="balance_due"], #balance_due, [data-field="balanceDue"]',
-  currency: '[name="currency"], #currency',
-  payment_terms: '[name="payment_terms"], #payment_terms',
-  notes: '[name="notes"], #notes, textarea[name="remarks"]',
+  // Plain text inputs
+  "invoice_number": "#fv_edycjadanych2_cc2_a133_idx16",   // invoiceNumber
+  "invoice_date":   "#fv_edycjadanych2_cc2_a133_idx20",   // issueDate
+  "due_date":       "#fv_edycjadanych2_cc2_a133_idx40",   // paymentDue
+  "vendor.name":    "#fv_edycjadanych2_cc2_a133_idx3",    // sellerName
+  "vendor.address": "#fv_edycjadanych2_cc2_a133_idx21",   // sellerAddress
+  "vendor.tax_id":  "#fv_edycjadanych2_cc2_a133_idx29",   // sellerNip (Polish tax ID)
+  "subtotal":       "#fv_edycjadanych2_cc2_a133_idx59",   // totalNet
+  "tax":            "#fv_edycjadanych2_cc2_a133_idx63",   // totalVat
+  "total":          "#fv_edycjadanych2_cc2_a133_idx61",   // totalGross
+  "bank_details":   "#fv_edycjadanych2_cc2_a133_idx39",   // bankAccount
+  // Select2 dropdowns (underlying <select> IDs, stripped of select2- prefix/-container suffix)
+  "currency":       "select2:#fv_edycjadanych2_cc2_a133_idx38",   // currency
+  "payment_terms":  "select2:#fv_edycjadanych2_cc2_a133_idx36",   // paymentForm
 };
 
 // ---------------------------------------------------------------------------
@@ -56,7 +57,7 @@ async function loadSettings() {
         serverUrl = data.serverUrl || "http://localhost:8765";
         $("serverUrlInput").value = serverUrl;
         $("geminiKeyInput").value = data.geminiKey || "";
-        $("vdeskUrlInput").value = data.vdeskUrl || "";
+        $("vdeskUrlInput").value = data.vdeskUrl || "https://faktury.unilogo.local";
         $("fieldMappingInput").value =
           data.fieldMapping || JSON.stringify(DEFAULT_FIELD_MAPPING, null, 2);
         $("useLlmToggle").checked = data.useLlm || false;
